@@ -21,4 +21,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "MeetSphere"
 include(":app")
- 
