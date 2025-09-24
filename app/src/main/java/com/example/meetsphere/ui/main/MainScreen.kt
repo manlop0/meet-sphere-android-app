@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -23,7 +24,7 @@ import com.example.meetsphere.ui.map.MapScreen
 import com.example.meetsphere.ui.navigation.Screen
 
 @Composable
-fun MainScreen() {
+fun MainScreen(navController: NavController) {
     val bottomBarNavController = rememberNavController()
 
     Scaffold(
@@ -41,7 +42,7 @@ fun MainScreen() {
 
                 bottomBarItems.forEach { screen ->
                     NavigationBarItem(
-                        label = { Text(text = screen.route.replace("_screen", "")) },
+                        label = { Text(text = screen.route.replace("_screen", "").replace("_", " ")) },
                         icon = { Icon(painterResource(id = getIconForScreen(screen)), contentDescription = null) },
                         selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                         onClick = {
@@ -63,7 +64,7 @@ fun MainScreen() {
             startDestination = Screen.Map.route,
             modifier = Modifier.padding(innerPadding),
         ) {
-            composable(Screen.Map.route) { MapScreen() }
+            composable(Screen.Map.route) { MapScreen(navController = navController, bottomBarNavController = bottomBarNavController) }
             composable(Screen.ActivityList.route) { ActivitiesScreen() }
             composable(Screen.ChatList.route) { ChatsScreen() }
         }

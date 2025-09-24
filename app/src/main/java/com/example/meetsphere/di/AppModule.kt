@@ -1,6 +1,8 @@
 package com.example.meetsphere.di
 
+import com.example.meetsphere.data.repository.ActivitiesRepositoryImpl
 import com.example.meetsphere.data.repository.AuthRepositoryImpl
+import com.example.meetsphere.domain.repository.ActivitiesRepository
 import com.example.meetsphere.domain.repository.AuthRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
