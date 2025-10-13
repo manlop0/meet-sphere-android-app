@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.meetsphere.ui.activities.ActivitiesScreen
 import com.example.meetsphere.ui.activities.ActivityDetailsScreen
 import com.example.meetsphere.ui.auth.AuthScreen
 import com.example.meetsphere.ui.chat.ChatScreen

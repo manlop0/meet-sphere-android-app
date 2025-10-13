@@ -19,4 +19,6 @@ interface ActivitiesRepository {
     ): Result<Unit>
 
     suspend fun getActivityById(id: String): Activity?
+
+    suspend fun closeActivity(activityId: String): Unit
 }

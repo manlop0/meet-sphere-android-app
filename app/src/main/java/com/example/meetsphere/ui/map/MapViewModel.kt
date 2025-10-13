@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.meetsphere.domain.model.MapMarker
 import com.example.meetsphere.domain.repository.ActivitiesRepository
+import com.example.meetsphere.domain.repository.AuthRepository
 import com.example.meetsphere.domain.repository.LocationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -30,6 +31,7 @@ data class MapUiState(
     val zoomLevel: Double = 12.0,
     val activities: List<MapMarker> = emptyList(),
     val isLoading: Boolean = true,
+    val currentUserId: String = "",
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -39,6 +41,7 @@ class MapViewModel
     constructor(
         private val activitiesRepository: ActivitiesRepository,
         private val locationRepository: LocationRepository,
+        private val authRepository: AuthRepository,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(MapUiState())
         val uiState = _uiState.asStateFlow()
@@ -53,6 +56,9 @@ class MapViewModel
 
         init {
             viewModelScope.launch {
+                val userId = authRepository.getCurrentUser()?.uid.orEmpty()
+                _uiState.update { it.copy(currentUserId = userId) }
+
                 locationRepository
                     .userLocationFlow()
                     .onEach { location ->

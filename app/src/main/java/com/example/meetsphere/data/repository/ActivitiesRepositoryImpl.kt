@@ -12,6 +12,7 @@ import com.firebase.geofire.GeoLocation
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
@@ -35,6 +36,8 @@ class ActivitiesRepositoryImpl
             onMapOnly: Boolean,
         ): Flow<List<MapMarker>> =
             callbackFlow {
+                val currentUser = auth.currentUser
+                checkNotNull(currentUser) { "User must be authenticated to get an activities" }
                 val center = GeoLocation(centerPoint.latitude, centerPoint.longitude)
 
                 var baseQuery: Query = firestore.collection("activities")
@@ -72,6 +75,7 @@ class ActivitiesRepositoryImpl
                                                 activityLocation.longitude,
                                             ),
                                         creatorName = activityDto.creatorName ?: "Unknown",
+                                        creatorId = currentUser.uid,
                                         shortDescription = (
                                             if (activityDto.description != null && activityDto.description.length < 30) {
                                                 activityDto.description
@@ -154,5 +158,25 @@ class ActivitiesRepositoryImpl
                 Log.e("ActivitiesRepository", "Error fetching activity by id: $id", e)
                 null
             }
+        }
+
+        override suspend fun closeActivity(activityId: String) {
+            val uid = auth.currentUser?.uid ?: throw IllegalStateException("Auth required")
+            val ref = firestore.collection("activities").document(activityId)
+
+            firestore
+                .runTransaction { tx ->
+                    val snap = tx.get(ref)
+                    if (!snap.exists()) {
+                        throw NoSuchElementException("Activity not found")
+                    }
+                    val creatorId =
+                        snap.getString("creatorId")
+                            ?: throw IllegalStateException("Invalid activity: missing creatorId")
+                    if (creatorId != uid) {
+                        throw SecurityException("Only creator can delete activity")
+                    }
+                    tx.delete(ref)
+                }.await()
         }
     }

@@ -6,5 +6,6 @@ data class MapMarker(
     val id: String,
     val position: GeoPoint,
     val creatorName: String,
+    val creatorId: String,
     val shortDescription: String,
 )

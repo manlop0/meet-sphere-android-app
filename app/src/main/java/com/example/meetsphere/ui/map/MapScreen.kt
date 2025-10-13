@@ -65,15 +65,15 @@ fun MapScreen(
             }
         }
 
-    LaunchedEffect(Unit) {
-        viewModel.navigationEvents.collectLatest { event ->
-            when (event) {
-                is MapNavigationEvent.ToActivityDetails -> {
+//    LaunchedEffect(Unit) {
+//        viewModel.navigationEvents.collectLatest { event ->
+//            when (event) {
+//                is MapNavigationEvent.ToActivityDetails -> {
 //                     navController.navigate(Screen.ActivityDetails.createRoute(event.activityId))
-                }
-            }
-        }
-    }
+//                }
+//            }
+//        }
+//    }
 
     Scaffold(
         floatingActionButtonPosition = FabPosition.Center,
@@ -102,20 +102,17 @@ fun MapScreen(
                         setMultiTouchControls(true)
                         zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
 
-                        // --- ИСПРАВЛЕННЫЙ СЛУШАТЕЛЬ КЛИКОВ ПО КАРТЕ ---
                         val eventsReceiver =
                             object : MapEventsReceiver {
                                 override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean {
-                                    viewModel.onMapClick() // Сообщаем ViewModel о клике
+                                    viewModel.onMapClick()
                                     return true
                                 }
 
                                 override fun longPressHelper(p: GeoPoint?) = false
                             }
                         overlays.add(0, MapEventsOverlay(eventsReceiver))
-                        // ---
 
-//                        overlays.add(locationOverlay)
                         overlays.add(locationOverlay)
 
                         addMapListener(
@@ -150,12 +147,17 @@ fun MapScreen(
                             Marker(mapView).apply {
                                 position = activity.position
                                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                                icon = ContextCompat.getDrawable(context, R.drawable.ic_activity_pin)
+                                icon =
+                                    if (activity.creatorId == uiState.currentUserId) {
+                                        ContextCompat.getDrawable(context, R.drawable.ic_activity_pin_own)
+                                    } else {
+                                        ContextCompat.getDrawable(context, R.drawable.ic_activity_pin_other)
+                                    }
                                 relatedObject = activity
 
                                 setOnMarkerClickListener { _, _ ->
                                     viewModel.onMarkerClick(activity)
-                                    true // `true` означает, что мы обработали событие
+                                    true
                                 }
                             }
                         mapView.overlays.add(marker)
@@ -164,18 +166,16 @@ fun MapScreen(
                 },
             )
 
-            // --- ИНТЕГРАЦИЯ ДИАЛОГОВОГО ОКНА ---
             if (selectedActivity != null) {
                 ActivityDetailsDialog(
                     marker = selectedActivity!!,
-                    onDismissRequest = { viewModel.onMapClick() }, // Закрытие по клику вне окна
+                    onDismissRequest = { viewModel.onMapClick() },
                     onMoreDetailsClick = { activityId ->
-                        // Сначала закрываем окно, потом переходим
+
                         viewModel.onMapClick()
                         navController.navigate(Screen.ActivityDetails.createRoute(activityId))
                     },
                 )
-                // ---
             }
 
             FloatingActionButton(
