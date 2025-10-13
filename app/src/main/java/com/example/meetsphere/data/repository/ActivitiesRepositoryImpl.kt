@@ -2,6 +2,7 @@ package com.example.meetsphere.data.repository
 
 import android.util.Log
 import com.example.meetsphere.data.remote.dto.ActivityDto
+import com.example.meetsphere.data.toActivity
 import com.example.meetsphere.domain.model.Activity
 import com.example.meetsphere.domain.model.MapMarker
 import com.example.meetsphere.domain.repository.ActivitiesRepository
@@ -148,40 +149,10 @@ class ActivitiesRepositoryImpl
                 if (!document.exists()) return null
 
                 val dto = document.toObject(ActivityDto::class.java) ?: return null
-                dtoToActivity(dto, id)
+                dto.toActivity(id)
             } catch (e: Exception) {
                 Log.e("ActivitiesRepository", "Error fetching activity by id: $id", e)
                 null
             }
-        }
-
-        private fun dtoToActivity(
-            dto: ActivityDto,
-            id: String,
-        ): Activity {
-            val fullDescription = dto.description ?: ""
-            val shortDescription =
-                if (fullDescription.length < 30) {
-                    fullDescription
-                } else {
-                    fullDescription.substring(0, 30) + "..."
-                }
-
-            val locationGeoPoint =
-                dto.location?.let { geoPoint ->
-                    GeoPoint(geoPoint.latitude, geoPoint.longitude)
-                }
-
-            return Activity(
-                id = id,
-                creatorId = dto.creatorId ?: "",
-                creatorName = dto.creatorName ?: "Unknown",
-                shortDescription = shortDescription,
-                fullDescription = fullDescription,
-                location = locationGeoPoint,
-                radius = dto.radius,
-                showOnMap = dto.showOnMap,
-                createdAt = dto.createdAt,
-            )
         }
     }

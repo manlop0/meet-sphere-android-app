@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -25,6 +26,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarData
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -32,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -40,6 +47,7 @@ import androidx.navigation.NavController
 import com.example.meetsphere.domain.model.Activity
 import com.example.meetsphere.ui.activityDetails.ActivityDetailsUiState
 import com.example.meetsphere.ui.activityDetails.ActivityDetailsViewModel
+import com.example.meetsphere.ui.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,6 +62,29 @@ fun ActivityDetailsScreen(
         viewModel.loadActivityDetails(activityId)
     }
 
+    val isCreatingChat by viewModel.isCreatingChat.collectAsState()
+    val chatError by viewModel.chatError.collectAsState()
+
+    val navigateToChat by viewModel.navigateToChat.collectAsState(initial = null)
+    LaunchedEffect(navigateToChat) {
+        navigateToChat?.let { chatId ->
+            navController.navigate(Screen.Chat.createRoute(chatId))
+        }
+    }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(chatError) {
+        chatError?.let { error ->
+            snackbarHostState.showSnackbar(
+                message = error,
+                actionLabel = "OK",
+                duration = SnackbarDuration.Short,
+            )
+            viewModel.clearChatError()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Activity details") })
@@ -63,9 +94,13 @@ fun ActivityDetailsScreen(
                 onBackClick = { navController.popBackStack() },
                 onMessageClick = {
                     val creatorId = (uiState as? ActivityDetailsUiState.Success)?.activity?.creatorId ?: ""
-                    navController.navigate("chat/$creatorId")
+                    viewModel.onMessageClick(creatorId)
                 },
+                isCreatingChat = isCreatingChat,
             )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
         },
     ) { paddingValues ->
         when (uiState) {
@@ -214,6 +249,7 @@ private fun DescriptionSection(
 private fun BottomButtonPanel(
     onBackClick: () -> Unit,
     onMessageClick: () -> Unit,
+    isCreatingChat: Boolean,
 ) {
     Surface(shadowElevation = 8.dp) {
         Row(
@@ -232,8 +268,17 @@ private fun BottomButtonPanel(
             Button(
                 onClick = onMessageClick,
                 modifier = Modifier.weight(1f),
+                enabled = !isCreatingChat,
             ) {
-                Text("Message")
+                if (isCreatingChat) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Creating chat...")
+                    }
+                } else {
+                    Text("Message")
+                }
             }
         }
     }

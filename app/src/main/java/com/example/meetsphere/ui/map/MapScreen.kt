@@ -3,8 +3,11 @@ package com.example.meetsphere.ui.map
 import android.graphics.drawable.Drawable
 import android.util.Log
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FabPosition
@@ -83,12 +86,14 @@ fun MapScreen(
                 Icon(Icons.Default.Add, contentDescription = "Create activity")
             }
         },
+        modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars),
     ) { paddingValues ->
         Box(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(paddingValues),
+                    .padding(paddingValues)
+                    .windowInsetsPadding(WindowInsets(0.dp)),
         ) {
             AndroidView(
                 factory = {
@@ -171,13 +176,13 @@ fun MapScreen(
                     },
                 )
                 // ---
+            }
 
-                FloatingActionButton(
-                    onClick = { viewModel.centerOnUserLocation() },
-                    modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
-                ) {
-                    Icon(painter = painterResource(R.drawable.ic_my_location), contentDescription = "My Location")
-                }
+            FloatingActionButton(
+                onClick = { viewModel.centerOnUserLocation() },
+                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+            ) {
+                Icon(painter = painterResource(R.drawable.ic_my_location), contentDescription = "My Location")
             }
         }
     }

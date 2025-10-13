@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.meetsphere.ui.activities.ActivityDetailsScreen
 import com.example.meetsphere.ui.auth.AuthScreen
+import com.example.meetsphere.ui.chat.ChatScreen
 import com.example.meetsphere.ui.createActivity.CreateActivityScreen
 import com.example.meetsphere.ui.main.MainScreen
 import com.example.meetsphere.ui.permission.PermissionScreen
@@ -65,8 +66,8 @@ fun AppNavigation() {
             )
         }
 
-        composable(route = Screen.Chat.route) {
-            // ChatScreen()
+        composable(route = Screen.Chat.route) { backStackEntry ->
+            ChatScreen(navController = navController)
         }
     }
 }

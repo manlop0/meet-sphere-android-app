@@ -1,7 +1,10 @@
 package com.example.meetsphere.data.repository
 
+import com.example.meetsphere.data.remote.dto.UserDto
+import com.example.meetsphere.data.toUser
 import com.example.meetsphere.domain.model.User
 import com.example.meetsphere.domain.repository.AuthRepository
+import com.example.meetsphere.domain.repository.UserRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.UserProfileChangeRequest
@@ -19,6 +22,7 @@ class AuthRepositoryImpl
     constructor(
         private val firebaseAuth: FirebaseAuth,
         private val firestore: FirebaseFirestore,
+        private val userRepository: UserRepository,
     ) : AuthRepository {
         private val _currentUser = MutableStateFlow<User?>(null)
         override val currentUser: StateFlow<User?>
@@ -37,9 +41,14 @@ class AuthRepositoryImpl
             try {
                 val result = firebaseAuth.signInWithEmailAndPassword(email, password).await()
                 val firebaseUser = result.user
+
                 firebaseUser?.let {
+                    val currentProfileResult = userRepository.getCurrentUserProfile()
+                    if (currentProfileResult.isFailure) {
+                        userRepository.createUserProfile(it)
+                    }
                     Result.success(
-                        firebaseUser.toDomainUser(),
+                        it.toDomainUser(),
                     )
                 } ?: Result.failure(Exception("Sign-in failed: User is null"))
             } catch (e: Exception) {
@@ -60,16 +69,16 @@ class AuthRepositoryImpl
                     firebaseUser.updateProfile(profileUpdates).await()
 
                     val userDocument = firestore.collection("users").document(firebaseUser.uid)
-                    // TODO: Заменить на реальный класс?
-                    val userData =
-                        mapOf(
-                            "uid" to firebaseUser.uid,
-                            "email" to email,
-                            "password" to password,
-                            "username" to username,
+
+                    val userDto =
+                        UserDto(
+                            firebaseUser.uid,
+                            firebaseUser.displayName.toString(),
+                            firebaseUser.email.toString(),
+                            null,
                         )
-                    userDocument.set(userData).await()
-                    Result.success(firebaseUser.toDomainUser())
+                    userDocument.set(userDto).await()
+                    Result.success(userDto.toUser())
                 } ?: Result.failure(Exception("Sign-up failed: User is null"))
             } catch (e: Exception) {
                 Result.failure(e)
@@ -81,9 +90,14 @@ class AuthRepositoryImpl
 
         override fun getCurrentUser(): User? = firebaseAuth.currentUser?.toDomainUser()
 
-        private fun FirebaseUser.toDomainUser(): User =
-            User(
-                uid = this.uid.toString(),
-                username = this.displayName.toString(),
-            )
+        private fun FirebaseUser.toDomainUser(): User {
+            val userData =
+                UserDto(
+                    this.uid,
+                    this.displayName.toString(),
+                    this.email.toString(),
+                    null,
+                )
+            return userData.toUser()
+        }
     }

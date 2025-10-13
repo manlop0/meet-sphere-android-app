@@ -19,7 +19,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.meetsphere.R
 import com.example.meetsphere.ui.activities.ActivitiesScreen
-import com.example.meetsphere.ui.chats.ChatsScreen
+import com.example.meetsphere.ui.chatList.ChatListScreen
 import com.example.meetsphere.ui.map.MapScreen
 import com.example.meetsphere.ui.navigation.Screen
 
@@ -66,7 +66,7 @@ fun MainScreen(navController: NavController) {
         ) {
             composable(Screen.Map.route) { MapScreen(navController = navController, bottomBarNavController = bottomBarNavController) }
             composable(Screen.ActivityList.route) { ActivitiesScreen() }
-            composable(Screen.ChatList.route) { ChatsScreen() }
+            composable(Screen.ChatList.route) { ChatListScreen(navController) }
         }
     }
 }
