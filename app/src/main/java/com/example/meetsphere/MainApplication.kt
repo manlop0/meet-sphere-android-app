@@ -1,7 +1,9 @@
 package com.example.meetsphere
 
 import android.app.Application
-import android.preference.PreferenceManager
+import android.os.Bundle
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowCompat.enableEdgeToEdge
 import com.example.meetsphere.BuildConfig
 import dagger.hilt.android.HiltAndroidApp
 import org.osmdroid.config.Configuration
@@ -11,7 +13,6 @@ import java.io.File
 class MainApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-
         val config = Configuration.getInstance()
 
         val prefs = getSharedPreferences("osmdroid", MODE_PRIVATE)

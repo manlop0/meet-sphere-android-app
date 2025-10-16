@@ -102,7 +102,7 @@ class MapViewModel
 
         fun centerOnUserLocation() {
             currentUserLocation?.let { location ->
-                _uiState.update { it.copy(cameraPosition = location, zoomLevel = 10.0) }
+                _uiState.update { it.copy(cameraPosition = location, zoomLevel = 20.0) }
             }
         }
 

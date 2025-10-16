@@ -122,7 +122,6 @@ fun MapScreen(
                         overlays.add(locationOverlay)
                         locationOverlay.enableMyLocation()
 
-                        // Безопасная конверсия Drawable → Bitmap
                         val drawable = ContextCompat.getDrawable(context, R.drawable.ic_user_map_location)
                         val bitmap: Bitmap? =
                             drawable?.let { d ->

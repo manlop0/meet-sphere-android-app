@@ -5,6 +5,7 @@ import com.example.meetsphere.data.remote.dto.ChatPreviewDto
 import com.example.meetsphere.data.remote.dto.ParticipantInfoDto
 import com.example.meetsphere.data.toChatMessage
 import com.example.meetsphere.data.toChatPreview
+import com.example.meetsphere.domain.model.ChatInfo
 import com.example.meetsphere.domain.model.ChatMessage
 import com.example.meetsphere.domain.model.ChatPreview
 import com.example.meetsphere.domain.repository.ChatRepository
@@ -99,7 +100,6 @@ class ChatRepositoryImpl
 
                 val participants = listOf(currentUserId, recipientId)
 
-                // 1. Ищем существующий чат
                 val existingChat =
                     firestore
                         .collection("chats")
@@ -113,10 +113,8 @@ class ChatRepositoryImpl
                         }
 
                 if (existingChat != null) {
-                    // 2. Если чат найден, возвращаем его ID
                     Result.success(existingChat.id)
                 } else {
-                    // 3. Если чат не найден, создаем новый
                     val currentUserProfile = userRepository.getCurrentUserProfile().getOrThrow()
                     val recipientProfile = userRepository.getUserProfile(recipientId).getOrThrow()
 
@@ -140,6 +138,29 @@ class ChatRepositoryImpl
                 }
             } catch (e: Exception) {
                 Result.failure(e)
+            }
+        }
+
+        override suspend fun getChatInfo(chatId: String): ChatInfo? {
+            return try {
+                val currentUserId = auth.currentUser?.uid ?: return null
+                val doc =
+                    firestore
+                        .collection("chats")
+                        .document(chatId)
+                        .get()
+                        .await()
+
+                val participantsIds = doc.get("participantsIds") as? List<String> ?: return null
+                val participantsInfo = doc.get("participantsInfo") as? Map<String, Map<String, Any>> ?: return null
+
+                val companionId = participantsIds.firstOrNull { it != currentUserId } ?: return null
+                val companionInfo = participantsInfo[companionId] ?: return null
+                val companionName = companionInfo["name"] as? String ?: "Unknown"
+
+                ChatInfo(companionName = companionName, companionId = companionId)
+            } catch (e: Exception) {
+                null
             }
         }
     }

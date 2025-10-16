@@ -13,6 +13,7 @@ import javax.inject.Inject
 data class ChatUiState(
     val messages: List<ChatMessage> = emptyList(),
     val messageText: String = "",
+    val companionName: String = "",
 )
 
 @HiltViewModel
@@ -33,6 +34,13 @@ class ChatViewModel
                 .onEach { messages ->
                     _uiState.update { it.copy(messages = messages) }
                 }.launchIn(viewModelScope)
+
+            viewModelScope.launch {
+                val chatInfo = chatRepository.getChatInfo(chatId)
+                chatInfo?.let { info ->
+                    _uiState.update { it.copy(companionName = info.companionName) }
+                }
+            }
         }
 
         fun onMessageChange(text: String) {
@@ -42,6 +50,8 @@ class ChatViewModel
         fun sendMessage() {
             val text = _uiState.value.messageText.trim()
             if (text.isBlank()) return
+
+            _uiState.update { it.copy(messageText = "") }
 
             viewModelScope.launch {
                 chatRepository.sendMessage(chatId, text)

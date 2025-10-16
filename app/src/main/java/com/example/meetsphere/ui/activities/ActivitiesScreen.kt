@@ -211,7 +211,7 @@ private fun MyActivityBlock(
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Close activity",
-                            tint = Color.Red,
+                            tint = MaterialTheme.colorScheme.primary,
                         )
                     }
                 }

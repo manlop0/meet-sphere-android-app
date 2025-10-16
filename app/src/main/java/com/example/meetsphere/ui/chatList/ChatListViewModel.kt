@@ -28,16 +28,9 @@ class ChatListViewModel
         val uiState = _uiState.asStateFlow()
 
         init {
-            loadChats() // Вызовите метод для загрузки
+            loadChats()
         }
 
-//        init {
-//            chatRepository
-//                .getChats()
-//                .onEach { chats ->
-//                    _uiState.update { it.copy(isLoading = false, chats = chats) }
-//                }.launchIn(viewModelScope)
-//        }
         private fun loadChats() {
             val currentUserId = auth.currentUser?.uid
             if (currentUserId == null) {
