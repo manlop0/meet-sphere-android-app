@@ -131,7 +131,6 @@ fun ChatListScreen(
                                 navController.navigate(Screen.Chat.createRoute(chat.chatId))
                             },
                         )
-                        HorizontalDivider(thickness = 0.5.dp)
                     }
                 }
             }

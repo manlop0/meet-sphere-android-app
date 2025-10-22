@@ -68,14 +68,14 @@ class ActivitiesRepositoryImpl
                             if (distanceToActivity <= activityRadius) {
                                 matchingActivities.add(
                                     MapMarker(
-                                        id = doc.id,
+                                        id = activityDto.id!!,
                                         position =
                                             GeoPoint(
                                                 activityLocation.latitude,
                                                 activityLocation.longitude,
                                             ),
                                         creatorName = activityDto.creatorName ?: "Unknown",
-                                        creatorId = currentUser.uid,
+                                        creatorId = activityDto.creatorId!!,
                                         shortDescription = (
                                             if (activityDto.description != null && activityDto.description.length < 30) {
                                                 activityDto.description
@@ -98,46 +98,38 @@ class ActivitiesRepositoryImpl
             }
 
         override suspend fun createActivity(
+            userId: String,
+            userName: String,
             description: String,
             location: GeoPoint?,
             radius: Double,
             showOnMap: Boolean,
         ): Result<Unit> =
             try {
-                val currentUser = auth.currentUser
-                checkNotNull(currentUser) { "User must be authenticated to create an activity" }
-
-                var geohash: String? = null
-                var firestoreLocation: com.google.firebase.firestore.GeoPoint? = null
-
-                if (location != null && showOnMap) {
-                    firestoreLocation =
-                        com.google.firebase.firestore
-                            .GeoPoint(location.latitude, location.longitude)
-                    geohash =
-                        GeoFireUtils.getGeoHashForLocation(
-                            GeoLocation(location.latitude, location.longitude),
-                        )
-                }
-
-                val docRef = firestore.collection("activities").document()
-
-                val newActivity =
+                val activityDto =
                     ActivityDto(
-                        id = docRef.id,
-                        creatorId = currentUser.uid,
-                        creatorName = currentUser.displayName ?: "Anonymous",
+                        id = firestore.collection("activities").document().id,
+                        creatorId = userId,
+                        creatorName = userName,
                         description = description,
-                        location = firestoreLocation,
+                        location =
+                            location?.let {
+                                com.google.firebase.firestore
+                                    .GeoPoint(it.latitude, it.longitude)
+                            },
                         radius = radius,
                         showOnMap = showOnMap,
-                        geohash = geohash,
                     )
 
-                docRef.set(newActivity).await()
+                firestore
+                    .collection("activities")
+                    .document(activityDto.id!!)
+                    .set(activityDto)
+                    .await()
 
                 Result.success(Unit)
             } catch (e: Exception) {
+                Log.e("ActivitiesRepository", "Failed to create activity", e)
                 Result.failure(e)
             }
 

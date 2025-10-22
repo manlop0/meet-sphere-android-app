@@ -150,20 +150,18 @@ private fun LocationSettingsSection(
             Switch(checked = showLocation, onCheckedChange = onShowLocationToggle)
         }
         Column(modifier = Modifier.animateContentSize()) {
-            if (showLocation) {
-                Spacer(modifier = Modifier.height(20.dp))
-                Text(
-                    text = "Radius of visibility: ${formatRadius(radius)}",
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                Slider(
-                    value = radius,
-                    onValueChange = onRadiusChange,
-                    valueRange = 100f..MAX_ACTIVITY_RADIUS_METERS.toFloat(),
-                    steps = ((MAX_ACTIVITY_RADIUS_METERS - 100) / 50).toInt() - 1,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                text = "Radius of visibility: ${formatRadius(radius)}",
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Slider(
+                value = radius,
+                onValueChange = onRadiusChange,
+                valueRange = 100f..MAX_ACTIVITY_RADIUS_METERS.toFloat(),
+                steps = ((MAX_ACTIVITY_RADIUS_METERS - 100) / 50).toInt() - 1,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }

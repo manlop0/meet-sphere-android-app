@@ -1,5 +1,6 @@
 package com.example.meetsphere.ui.activities
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.meetsphere.domain.model.MapMarker
@@ -7,7 +8,6 @@ import com.example.meetsphere.domain.repository.ActivitiesRepository
 import com.example.meetsphere.domain.repository.AuthRepository
 import com.example.meetsphere.domain.repository.ChatRepository
 import com.example.meetsphere.domain.repository.LocationRepository
-import com.example.meetsphere.ui.navigation.Screen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -66,6 +66,7 @@ class ActivitiesViewModel
         val navigationEvents: SharedFlow<ActivitiesNavigationEvent> = _navigationEvents.asSharedFlow()
 
         private var currentUserLocation: GeoPoint? = null
+        private var currentUserId: String = ""
 
         init {
             observeActivities()
@@ -74,22 +75,46 @@ class ActivitiesViewModel
         @OptIn(ExperimentalCoroutinesApi::class)
         private fun observeActivities() {
             viewModelScope.launch {
-                val currentUser = authRepository.currentUser.value
-                checkNotNull(currentUser) { "User must be authenticated to get activities" }
-
-                locationRepository
-                    .userLocationFlow()
-                    .onEach { loc -> currentUserLocation = loc }
+                authRepository.currentUser
                     .filterNotNull()
-                    .distinctUntilChanged()
-                    .flatMapLatest { loc ->
-                        activitiesRepository.getActivitiesNearby(loc, onMapOnly = false)
+                    .flatMapLatest { user ->
+                        currentUserId = user.uid
+                        Log.d("ActivitiesViewModel", "Current user updated: ${user.username} (${user.uid})")
+
+                        locationRepository
+                            .userLocationFlow()
+                            .onEach { loc -> currentUserLocation = loc }
+                            .filterNotNull()
+                            .distinctUntilChanged()
+                            .flatMapLatest { loc ->
+                                activitiesRepository.getActivitiesNearby(loc, onMapOnly = false)
+                            }
                     }.onStart { _uiState.update { it.copy(loading = true, error = null) } }
-                    .catch { e -> _uiState.update { it.copy(loading = false, error = e.message) } }
-                    .collect { markers ->
-                        val my = markers.firstOrNull { it.creatorId == currentUser.uid }
-                        val others = markers.filter { marker -> marker.creatorId != currentUser.uid }
-                        _uiState.update { it.copy(loading = false, myActivity = my, othersActivities = others, error = null) }
+                    .catch { e ->
+                        Log.e("ActivitiesViewModel", "Error loading activities", e)
+                        _uiState.update { it.copy(loading = false, error = e.message) }
+                    }.collect { markers ->
+                        Log.d("ActivitiesViewModel", "Loaded ${markers.size} activities for user: $currentUserId")
+                        markers.forEach { marker ->
+                            Log.d(
+                                "ActivitiesViewModel",
+                                "Activity: ${marker.creatorName} (${marker.creatorId}), isMine: ${marker.creatorId == currentUserId}",
+                            )
+                        }
+
+                        val my = markers.firstOrNull { it.creatorId == currentUserId }
+                        val others = markers.filter { it.creatorId != currentUserId }
+
+                        Log.d("ActivitiesViewModel", "My activity: ${my?.creatorName}, Others: ${others.size}")
+
+                        _uiState.update {
+                            it.copy(
+                                loading = false,
+                                myActivity = my,
+                                othersActivities = others,
+                                error = null,
+                            )
+                        }
                     }
             }
         }
@@ -130,9 +155,7 @@ class ActivitiesViewModel
                     _navigationEvents.emit(ActivitiesNavigationEvent.ToChat(chatId))
                 } else {
                     _uiState.update {
-                        it.copy(
-                            chatError = result.exceptionOrNull()?.message ?: "Failed to create chat",
-                        )
+                        it.copy(chatError = result.exceptionOrNull()?.message ?: "Failed to create chat")
                     }
                 }
             }

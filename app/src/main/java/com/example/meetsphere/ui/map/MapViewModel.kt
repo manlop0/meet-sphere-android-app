@@ -1,5 +1,6 @@
 package com.example.meetsphere.ui.map
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.meetsphere.domain.model.MapMarker
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
@@ -56,21 +58,22 @@ class MapViewModel
 
         init {
             viewModelScope.launch {
-                val userId = authRepository.getCurrentUser()?.uid.orEmpty()
-                _uiState.update { it.copy(currentUserId = userId) }
+                authRepository.currentUser
+                    .filterNotNull()
+                    .flatMapLatest { user ->
+                        _uiState.update { it.copy(currentUserId = user.uid) }
 
-                locationRepository
-                    .userLocationFlow()
-                    .onEach { location ->
-                        currentUserLocation = location
-
-                        if (_uiState.value.isLoading) {
-                            _uiState.update { it.copy(cameraPosition = location) }
-                        }
-                    }.flatMapLatest { location ->
-                        activitiesRepository.getActivitiesNearby(location, onMapOnly = true)
-                    }.catch {
-                        // TODO: Сделать обработку ошибок
+                        locationRepository
+                            .userLocationFlow()
+                            .onEach { location ->
+                                currentUserLocation = location
+                                if (_uiState.value.isLoading) {
+                                    _uiState.update { it.copy(cameraPosition = location) }
+                                }
+                            }.filterNotNull()
+                            .flatMapLatest { location ->
+                                activitiesRepository.getActivitiesNearby(location, onMapOnly = true)
+                            }
                     }.collect { activities ->
                         _uiState.update {
                             it.copy(
@@ -102,7 +105,7 @@ class MapViewModel
 
         fun centerOnUserLocation() {
             currentUserLocation?.let { location ->
-                _uiState.update { it.copy(cameraPosition = location, zoomLevel = 20.0) }
+                _uiState.update { it.copy(cameraPosition = location, zoomLevel = 13.0) }
             }
         }
 

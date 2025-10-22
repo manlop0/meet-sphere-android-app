@@ -1,9 +1,11 @@
 package com.example.meetsphere.ui.createActivity
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.meetsphere.domain.repository.ActivitiesRepository
+import com.example.meetsphere.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,6 +20,7 @@ data class CreateActivityUiState(
     val radius: Float = 1000f,
     val isCreating: Boolean = false,
     val createSuccess: Boolean = false,
+    val error: String? = null,
 )
 
 @HiltViewModel
@@ -25,6 +28,7 @@ class CreateActivityViewModel
     @Inject
     constructor(
         private val activitiesRepository: ActivitiesRepository,
+        private val authRepository: AuthRepository,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(CreateActivityUiState())
@@ -47,12 +51,31 @@ class CreateActivityViewModel
 
         fun onCreateActivity() {
             viewModelScope.launch {
-                _uiState.update { it.copy(isCreating = true) }
+                _uiState.update { it.copy(isCreating = true, error = null) }
 
-                val location = if (_uiState.value.showLocation) GeoPoint(latitude, longitude) else null
+                val currentUser = authRepository.getCurrentUser()
+
+                if (currentUser == null) {
+                    _uiState.update {
+                        it.copy(
+                            isCreating = false,
+                            error = "User not authenticated",
+                        )
+                    }
+                    return@launch
+                }
+
+                val location =
+//                    if (_uiState.value.showLocation) {
+                    GeoPoint(latitude, longitude)
+//                    } else {
+//                        null
+//                    }
 
                 val result =
                     activitiesRepository.createActivity(
+                        userId = currentUser.uid,
+                        userName = currentUser.username,
                         description = _uiState.value.description.trim(),
                         location = location,
                         radius = _uiState.value.radius.toDouble(),
@@ -64,7 +87,13 @@ class CreateActivityViewModel
                         kotlinx.coroutines.delay(1500)
                         _uiState.update { it.copy(isCreating = false, createSuccess = true) }
                     }.onFailure { exception ->
-                        // TODO: сделать обработку ошибок
+                        Log.e("CreateActivityViewModel", "Failed to create activity", exception)
+                        _uiState.update {
+                            it.copy(
+                                isCreating = false,
+                                error = exception.message ?: "Failed to create activity",
+                            )
+                        }
                     }
             }
         }

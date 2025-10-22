@@ -12,6 +12,8 @@ interface ActivitiesRepository {
     ): Flow<List<MapMarker>>
 
     suspend fun createActivity(
+        userId: String,
+        userName: String,
         description: String,
         location: GeoPoint?,
         radius: Double,

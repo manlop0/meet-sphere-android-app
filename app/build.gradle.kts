@@ -75,6 +75,7 @@ dependencies {
 
     // OpenStreetMap
     implementation(libs.osmdroid.android)
+    implementation(libs.osmbonuspack) // Clusterization
 
     // Google api for location
     implementation(libs.play.services.location)
