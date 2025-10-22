@@ -58,7 +58,7 @@ class MapViewModel
 
         init {
             viewModelScope.launch {
-                authRepository.currentUser
+                authRepository.currentUserFlow
                     .filterNotNull()
                     .flatMapLatest { user ->
                         _uiState.update { it.copy(currentUserId = user.uid) }

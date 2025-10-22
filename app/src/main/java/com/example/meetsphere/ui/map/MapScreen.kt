@@ -97,7 +97,6 @@ fun MapScreen(
                         isHorizontalMapRepetitionEnabled = false
 
                         if (isDarkTheme) {
-                            overlayManager.tilesOverlay.setColorFilter(TilesOverlay.INVERT_COLORS)
                             overlayManager.tilesOverlay.loadingBackgroundColor = Color.BLACK
                         }
 
@@ -193,10 +192,8 @@ fun MapScreen(
                 },
                 update = { mapView ->
                     if (isDarkTheme) {
-                        mapView.overlayManager.tilesOverlay.setColorFilter(TilesOverlay.INVERT_COLORS)
                         mapView.overlayManager.tilesOverlay.loadingBackgroundColor = Color.BLACK
                     } else {
-                        mapView.overlayManager.tilesOverlay.setColorFilter(null)
                         mapView.overlayManager.tilesOverlay.loadingBackgroundColor = Color.WHITE
                     }
 

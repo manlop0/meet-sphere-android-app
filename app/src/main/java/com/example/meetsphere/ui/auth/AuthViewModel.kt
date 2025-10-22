@@ -22,7 +22,7 @@ class AuthViewModel
         init {
             viewModelScope.launch {
                 kotlinx.coroutines.delay(1000)
-                authRepository.currentUser.collect { user ->
+                authRepository.currentUserFlow.collect { user ->
                     _uiState.value =
                         _uiState.value.copy(
                             isAuthenticated = user != null,

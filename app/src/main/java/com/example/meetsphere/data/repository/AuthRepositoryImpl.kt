@@ -25,7 +25,7 @@ class AuthRepositoryImpl
         private val userRepository: UserRepository,
     ) : AuthRepository {
         private val _currentUser = MutableStateFlow<User?>(null)
-        override val currentUser: StateFlow<User?>
+        override val currentUserFlow: StateFlow<User?>
             get() = _currentUser.asStateFlow()
 
         init {

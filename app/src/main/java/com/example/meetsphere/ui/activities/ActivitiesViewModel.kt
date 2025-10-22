@@ -75,7 +75,7 @@ class ActivitiesViewModel
         @OptIn(ExperimentalCoroutinesApi::class)
         private fun observeActivities() {
             viewModelScope.launch {
-                authRepository.currentUser
+                authRepository.currentUserFlow
                     .filterNotNull()
                     .flatMapLatest { user ->
                         currentUserId = user.uid

@@ -38,7 +38,7 @@ class ChatRepositoryImpl
                 .collection("chats")
                 .whereArrayContains("participantsIds", currentUserId)
                 .orderBy("lastMessageTimestamp", Query.Direction.DESCENDING)
-                .snapshots() // snapshots() возвращает Flow<QuerySnapshot> для real-time обновлений
+                .snapshots()
                 .map { snapshot ->
                     snapshot.documents.mapNotNull { doc ->
                         val dto = doc.toObject(ChatPreviewDto::class.java)

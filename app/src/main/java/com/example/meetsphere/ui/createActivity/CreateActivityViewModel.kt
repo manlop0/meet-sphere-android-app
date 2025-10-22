@@ -53,9 +53,9 @@ class CreateActivityViewModel
             viewModelScope.launch {
                 _uiState.update { it.copy(isCreating = true, error = null) }
 
-                val currentUser = authRepository.getCurrentUser()
+                val currentUserFlow = authRepository.getCurrentUser()
 
-                if (currentUser == null) {
+                if (currentUserFlow == null) {
                     _uiState.update {
                         it.copy(
                             isCreating = false,
@@ -74,8 +74,8 @@ class CreateActivityViewModel
 
                 val result =
                     activitiesRepository.createActivity(
-                        userId = currentUser.uid,
-                        userName = currentUser.username,
+                        userId = currentUserFlow.uid,
+                        userName = currentUserFlow.username,
                         description = _uiState.value.description.trim(),
                         location = location,
                         radius = _uiState.value.radius.toDouble(),

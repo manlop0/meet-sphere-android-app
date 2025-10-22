@@ -4,7 +4,7 @@ import com.example.meetsphere.domain.model.User
 import kotlinx.coroutines.flow.StateFlow
 
 interface AuthRepository {
-    val currentUser: StateFlow<User?>
+    val currentUserFlow: StateFlow<User?>
 
     suspend fun signInWithEmailAndPassword(
         email: String,
